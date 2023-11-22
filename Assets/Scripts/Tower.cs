@@ -6,16 +6,19 @@ public class Tower : MonoBehaviour
 {
     public float range = 15f;
     public Transform rangeVisuals;
-    public LayerMask enemyLayer;
 
     public float fireRate = 1f;
     public GameObject bulletPrefab;
     public Transform shootingPoint;
 
-    private float lastShot;
-    
+    float lastShot;
+    List<Transform> enemies = new();
+    SphereCollider rangeArea;
+
     void Start()
     {
+        rangeArea = GetComponent<SphereCollider>();
+        rangeArea.radius = range;
         rangeVisuals.localScale = Vector3.one * range * 2;
     }
 
@@ -30,10 +33,8 @@ public class Tower : MonoBehaviour
     }
 
     void Shoot()
-    {
-        var hits = Physics.SphereCastAll(transform.position, range, transform.forward, enemyLayer);
-
-         var target = FindNearest(hits);
+    {     
+         var target = FindNearest();
 
         if(target != null)
         {
@@ -44,22 +45,46 @@ public class Tower : MonoBehaviour
        
     }
 
-    Transform FindNearest(RaycastHit[] hits)
+    Transform FindNearest()
     {
-        if (hits.Length == 0) return null;
+        if (enemies.Count == 0) return null;
 
-        var maxDistance = Vector3.Distance(transform.position, hits[0].transform.position);
-        var target = hits[0].transform;
+        var maxDistance = Vector3.Distance(transform.position, enemies[0].transform.position);
+        var target = enemies[0].transform;
 
-        foreach(var hit in hits)
+        foreach(var hit in enemies)
         {
-            if(maxDistance < hit.distance)
+            var distance = Vector3.Distance(transform.position, hit.transform.position);
+
+            if(maxDistance < distance)
             {
-                maxDistance = hit.distance;
+                maxDistance = distance;
                 target = hit.transform;
             }
         }
 
         return target;
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.gameObject.CompareTag("Enemy"))
+        {
+            enemies.Add(other.transform);
+        }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.gameObject.CompareTag("Enemy") && enemies.Contains(other.transform))
+        {
+            enemies.Remove(other.transform);
+        }
+    }
+
+    public void FallDown()
+    {
+        //TODO: vfx explode into parts
+        Destroy(gameObject);
     }
 }

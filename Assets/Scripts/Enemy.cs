@@ -17,6 +17,10 @@ public class Enemy : MonoBehaviour
     public float fireRate = 1;
     public Transform shootingPoint;
 
+    [Header("Loot")]
+    public Vector2Int loot = new(10, 20);
+    public ParticleSystem lootVFX;
+
     SphereCollider rangeArea;
     List<Transform> towers = new();
     float lastShot;
@@ -72,6 +76,11 @@ public class Enemy : MonoBehaviour
     public void Die()
     {
         //TODO: animations, vfx
+        var money = Random.Range(loot.x, loot.y);
+        MoneyCounter.instance.Money += money;
+
+        Instantiate(lootVFX, transform.position, Quaternion.identity);
+
         Destroy(gameObject);
     }
 
